@@ -47,10 +47,26 @@ fps_controller = pygame.time.Clock()
 
 
 # Game variables
-snake_pos = [100, 50]
-snake_body = [[100, 50], [100-10, 50], [100-(2*10), 50]]
+# snake_pos = [100, 50]
+# snake_body = [[100, 50], [100-10, 50], [100-(2*10), 50]]
 
-food_pos = [random.randrange(1, (frame_size_x//10)) * 10, random.randrange(1, (frame_size_y//10)) * 10]
+# food_pos = [random.randrange(1, (frame_size_x//10)) * 10, random.randrange(1, (frame_size_y//10)) * 10]
+
+class Entity:
+    def __init__(self, type, color, position):
+        self.type = type
+        self.color = color
+        self.position = position
+
+entities = [
+    Entity("head", blue, [100, 50]),
+    Entity("food", white, [random.randrange(1, (frame_size_x//10)) * 10, random.randrange(1, (frame_size_y//10)) * 10]),  
+    Entity("body", green, [100, 50]), 
+    Entity("body", green, [100-10, 50]), 
+    Entity("body", green, [100-20, 50])
+    ]
+
+
 food_spawn = True
 
 direction = 'RIGHT'
@@ -87,6 +103,7 @@ def show_score(choice, color, font, size):
     # pygame.display.flip()
 
 
+
 # Main logic
 while True:
     for event in pygame.event.get():
@@ -118,51 +135,51 @@ while True:
     if change_to == 'RIGHT' and direction != 'LEFT':
         direction = 'RIGHT'
 
-    # Moving the snake
-    if direction == 'UP':
-        snake_pos[1] -= 10
-    if direction == 'DOWN':
-        snake_pos[1] += 10
-    if direction == 'LEFT':
-        snake_pos[0] -= 10
-    if direction == 'RIGHT':
-        snake_pos[0] += 10
-
-    # Snake body growing mechanism
-    snake_body.insert(0, list(snake_pos))
-    if snake_pos[0] == food_pos[0] and snake_pos[1] == food_pos[1]:
-        score += 1
-        food_spawn = False
-    else:
-        snake_body.pop()
-
-    # Spawning food on the screen
-    if not food_spawn:
-        food_pos = [random.randrange(1, (frame_size_x//10)) * 10, random.randrange(1, (frame_size_y//10)) * 10]
-    food_spawn = True
-
-    # GFX
     game_window.fill(black)
-    for pos in snake_body:
-        # Snake body
-        # .draw.rect(play_surface, color, xy-coordinate)
-        # xy-coordinate -> .Rect(x, y, size_x, size_y)
-        pygame.draw.rect(game_window, green, pygame.Rect(pos[0], pos[1], 10, 10))
+    for entity in entities:
 
-    # Snake food
-    pygame.draw.rect(game_window, white, pygame.Rect(food_pos[0], food_pos[1], 10, 10))
+        # Moving the snake
+        if entity.type == "head":          
+            if direction == 'UP':
+                entity.position[1] -= 10
+            if direction == 'DOWN':
+                entity.position[1] += 10
+            if direction == 'LEFT':
+                entity.position[0] -= 10
+            if direction == 'RIGHT':
+                entity.position[0] += 10
 
-    # Game Over conditions
-    # Getting out of bounds
-    if snake_pos[0] < 0 or snake_pos[0] > frame_size_x-10:
-        game_over()
-    if snake_pos[1] < 0 or snake_pos[1] > frame_size_y-10:
-        game_over()
-    # Touching the snake body
-    for block in snake_body[1:]:
-        if snake_pos[0] == block[0] and snake_pos[1] == block[1]:
-            game_over()
+            test = [entity.position[0], entity.position[1]]
+            # Snake body growing mechanism
+            entities.insert(2, Entity("body", green, [entity.position[0], entity.position[1]]))
+            for food in entities:
+                if food.type == "food": 
+                    if entity.position[0] == food.position[0] and entity.position[1] == food.position[1]:
+                        score += 1
+                        food_spawn = False
+                    else:
+                        entities.pop()
 
+                # Spawning food on the screen
+                if not food_spawn:
+                    food.position = [random.randrange(1, (frame_size_x//10)) * 10, random.randrange(1, (frame_size_y//10)) * 10]
+                food_spawn = True
+
+        # GFX
+        pygame.draw.rect(game_window, entity.color, pygame.Rect(entity.position[0], entity.position[1], 10, 10))
+
+        # Game Over conditions
+        # Getting out of bounds
+        if entity.type == "head":
+            if entity.position[0] < 0 or entity.position[0] > frame_size_x-10:
+                game_over()
+            if entity.position[1] < 0 or entity.position[1] > frame_size_y-10:
+                game_over()
+            # Touching the snake body
+            for body in entities[3:]:
+                if entity.position[0] == body.position[0] and entity.position[1] == body.position[1]:
+                    game_over()
+    
     show_score(1, white, 'consolas', 20)
     # Refresh game screen
     pygame.display.update()
